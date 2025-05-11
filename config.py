@@ -1,7 +1,7 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 import secrets
-
+from typing import List
 
 class Settings(BaseSettings):
     
@@ -14,6 +14,16 @@ class Settings(BaseSettings):
     SECRET_KEY: str = secrets.token_urlsafe(32)
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 дней
+
+    # CORS_ORIGINS: str = "*"  # Заменяем List[str] на str
+    # CORS_METHODS: str = "*"
+    # CORS_HEADERS: str = "*"
+    #
+    # @property
+    # def cors_origins_list(self):
+    #     if self.CORS_ORIGINS == "*":
+    #         return ["*"]
+    #     return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
 
     class Config:
         env_file = ".env"
