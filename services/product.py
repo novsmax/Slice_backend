@@ -79,30 +79,19 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
         return query.offset(skip).limit(limit).all()
 
     def search(
-            self,
-            db: Session,
-            *,
-            query: str,
-            category_id: Optional[int] = None,
-            brand_id: Optional[int] = None,
-            skip: int = 0,
-            limit: int = 100,
-            with_relations: bool = False
+        self,
+        db: Session,
+        *,
+        query: str,
+        category_id: Optional[int] = None,
+        brand_id: Optional[int] = None,
+        is_active: Optional[bool] = None,  # Добавляем параметр is_active
+        skip: int = 0,
+        limit: int = 100,
+        with_relations: bool = False
     ) -> List[Product]:
         """
-        Поиск товаров по названию, описанию или SKU
-
-        Args:
-            db: Сессия базы данных
-            query: Поисковый запрос
-            category_id: Фильтр по категории
-            brand_id: Фильтр по бренду
-            skip: Количество пропускаемых записей
-            limit: Максимальное количество возвращаемых записей
-            with_relations: Загружать ли связанные объекты
-
-        Returns:
-            Список объектов товаров
+        Поиск товаров по названию, описанию или SKU с возможностью фильтрации по активности
         """
         search_term = f"%{query}%"
 
@@ -128,6 +117,10 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
 
         if brand_id is not None:
             filters.append(Product.brand_id == brand_id)
+            
+        # Добавляем фильтр по активности, если он указан
+        if is_active is not None:
+            filters.append(Product.is_active == is_active)
 
         return base_query.filter(*filters).offset(skip).limit(limit).all()
 
@@ -137,19 +130,11 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
             *,
             query: str,
             category_id: Optional[int] = None,
-            brand_id: Optional[int] = None
+            brand_id: Optional[int] = None,
+            is_active: Optional[bool] = None  # Добавляем параметр is_active
     ) -> int:
         """
         Подсчет количества товаров, соответствующих поисковому запросу
-
-        Args:
-            db: Сессия базы данных
-            query: Поисковый запрос
-            category_id: Фильтр по категории
-            brand_id: Фильтр по бренду
-
-        Returns:
-            Количество товаров
         """
         search_term = f"%{query}%"
 
@@ -166,5 +151,9 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
 
         if brand_id is not None:
             filters.append(Product.brand_id == brand_id)
+            
+        # Добавляем фильтр по активности, если он указан
+        if is_active is not None:
+            filters.append(Product.is_active == is_active)
 
         return db.query(Product).filter(*filters).count()

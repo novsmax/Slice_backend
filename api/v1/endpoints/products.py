@@ -21,6 +21,7 @@ def list_products(
         query: Optional[str] = Query(None, description="Поисковый запрос"),
         category_id: Optional[int] = Query(None, description="Фильтр по категории"),
         brand_id: Optional[int] = Query(None, description="Фильтр по бренду"),
+        is_active: Optional[bool] = Query(None, description="Фильтр по активности товара"),
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ) -> Any:
@@ -29,6 +30,18 @@ def list_products(
     """
     skip = (page - 1) * per_page
 
+    # Для админ-панели показываем все товары
+    # Для клиентской части применяем фильтр is_active, если он указан
+    if is_active is not None:
+        filters = {"is_active": is_active}
+    else:
+        filters = {}
+        
+    if category_id is not None:
+        filters["category_id"] = category_id
+    if brand_id is not None:
+        filters["brand_id"] = brand_id
+
     if query:
         items = service.search(
             db,
@@ -36,21 +49,17 @@ def list_products(
             category_id=category_id,
             brand_id=brand_id,
             skip=skip,
-            limit=per_page
+            limit=per_page,
+            is_active=is_active  # Передаем параметр is_active в метод search
         )
         total = service.search_count(
             db,
             query=query,
             category_id=category_id,
-            brand_id=brand_id
+            brand_id=brand_id,
+            is_active=is_active  # Передаем параметр is_active в метод search_count
         )
     else:
-        filters = {}
-        if category_id is not None:
-            filters["category_id"] = category_id
-        if brand_id is not None:
-            filters["brand_id"] = brand_id
-
         items = service.get_multi(db, skip=skip, limit=per_page, filters=filters)
         total = service.get_count(db, filters=filters)
 
