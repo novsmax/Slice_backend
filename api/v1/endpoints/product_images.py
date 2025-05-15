@@ -18,6 +18,16 @@ router = APIRouter()
 service = ProductImageService()
 product_service = ProductService()
 
+@router.get("/count", response_model=int)
+def count_product_images(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """
+    Получение общего количества изображений товаров
+    """
+    return db.query(ProductImage).count()
+
 
 @router.get("/by-product/{product_id}", response_model=List[ProductImageSchema])
 def list_product_images(
