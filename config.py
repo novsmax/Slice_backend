@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 дней
 
+    UPLOAD_DIR: str = "static/uploads"
+    STATIC_URL: str = "/static"
+    MAX_UPLOAD_SIZE: int = 5242880
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

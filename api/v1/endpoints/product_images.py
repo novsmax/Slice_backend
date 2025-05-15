@@ -1,15 +1,18 @@
-from typing import List, Any
-from fastapi import APIRouter, Depends, HTTPException, Query
+# В начало файла добавьте следующий импорт (или обновите существующий):
+from typing import List, Optional, Any
+from fastapi import APIRouter, Depends, HTTPException, Query, File, UploadFile, Form
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models.product import Product
+from schemas.product_image import ProductImage as ProductImageSchema  # Pydantic схема
 from models.product_image import ProductImage
 from models.user import User
 from schemas.product_image import ProductImage as ProductImageSchema, ProductImageCreate, ProductImageUpdate
 from services.product_image import ProductImageService
 from services.product import ProductService
 from utils.auth import get_current_user, check_create_access, check_update_access, check_delete_access
+from utils.file_handling import save_upload_file  # Убедитесь, что добавили этот файл
 
 router = APIRouter()
 service = ProductImageService()
@@ -143,3 +146,57 @@ def delete_product_image(
         )
 
     return service.remove(db, id=image_id)
+
+@router.post("/upload", response_model=ProductImageSchema, status_code=201)
+async def upload_product_image(
+    file: UploadFile = File(...),
+    product_id: int = Form(...),
+    alt_text: Optional[str] = Form(None),
+    is_primary: str = Form('false'),  # Получаем как строку
+    display_order: int = Form(0),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(check_create_access)
+) -> Any:
+    """
+    Загрузка нового изображения для товара.
+    """
+    is_primary_bool = is_primary.lower() == 'true'
+
+    # Проверяем существование товара
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Товар с ID {product_id} не найден"
+        )
+    
+    # Сохраняем файл
+    file_url = await save_upload_file(file, f"products/{product_id}")
+    if not file_url:
+        raise HTTPException(
+            status_code=400,
+            detail="Не удалось сохранить файл. Проверьте, что это изображение."
+        )
+    
+    # Если изображение должно быть основным, сбрасываем флаг для других изображений
+    if is_primary_bool:
+        db.query(ProductImage).filter(
+            ProductImage.product_id == product_id,
+            ProductImage.is_primary == True
+        ).update({"is_primary": False})
+    
+    # Создаем запись в базе данных
+    image_data = {
+        "product_id": product_id,
+        "image_url": file_url,
+        "alt_text": alt_text or product.name,
+        "is_primary": is_primary_bool,  # Используем преобразованное значение
+        "display_order": display_order
+    }
+    
+    db_obj = ProductImage(**image_data)
+    db.add(db_obj)
+    db.commit()
+    db.refresh(db_obj)
+    
+    return db_obj

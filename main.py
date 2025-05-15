@@ -1,11 +1,19 @@
 from fastapi import FastAPI
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
-
+from fastapi.middleware.cors import CORSMiddleware
 from api.api import api_router
 from config import get_settings
+from fastapi.staticfiles import StaticFiles
+import os
+from pathlib import Path
+
+
+Path("static/uploads").mkdir(parents=True, exist_ok=True)
+
 
 settings = get_settings()
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -15,7 +23,17 @@ app = FastAPI(
     redoc_url=None,
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 app.include_router(api_router, prefix="/api")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 @app.get("/docs", include_in_schema=False)
