@@ -35,6 +35,13 @@ app.add_middleware(
 app.include_router(api_router, prefix="/api")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=settings.cors_origins_list,  # Используем метод вместо прямого доступа
+#     allow_credentials=True,
+#     allow_methods=settings.CORS_METHODS.split(",") if settings.CORS_METHODS != "*" else ["*"],
+#     allow_headers=settings.CORS_HEADERS.split(",") if settings.CORS_HEADERS != "*" else ["*"],
+# )
 
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger_ui_html():

@@ -1,7 +1,7 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 import secrets
-
+from typing import List
 
 class Settings(BaseSettings):
     
@@ -18,6 +18,15 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "static/uploads"
     STATIC_URL: str = "/static"
     MAX_UPLOAD_SIZE: int = 5242880
+    # CORS_ORIGINS: str = "*"  # Заменяем List[str] на str
+    # CORS_METHODS: str = "*"
+    # CORS_HEADERS: str = "*"
+    #
+    # @property
+    # def cors_origins_list(self):
+    #     if self.CORS_ORIGINS == "*":
+    #         return ["*"]
+    #     return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
 
     class Config:
         env_file = ".env"
